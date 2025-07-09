@@ -1,6 +1,7 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
+from crewai.project import before_kickoff, after_kickoff
 from typing import List
 from crewai_tools import MCPServerAdapter  # Import MCPServerAdapter for arXiv tool
 # If you want to run a snippet of code before or after the crew starts,
@@ -30,6 +31,17 @@ class AipBenchmark():
     
     # If you would like to add tools to your agents, you can learn more about it here:
     # https://docs.crewai.com/concepts/agents#agent-tools
+
+    @after_kickoff
+    def disconnect_from_mcp(self, _):
+        """
+        Disconnect from MCP SSE server.
+        """
+        if mcp_server_adapter and getattr(mcp_server_adapter, 'is_connected', False):
+            print("Stopping MCP server connection…")
+            mcp_server_adapter.stop()
+        elif mcp_server_adapter:
+            print("MCP server adapter was not connected. No stop needed or start failed.")
 
     @agent
     def arxiv_research_agent(self) -> Agent:
@@ -78,9 +90,4 @@ def start_mcp_adapter():
         print(f"Error starting MCP adapter: {e}")
         mcp_tools = mcp_server_adapter.tools
 
-def stop_mcp_adapter():
-    if mcp_server_adapter and getattr(mcp_server_adapter, 'is_connected', False):
-        print("Stopping MCP server connection…")
-        mcp_server_adapter.stop()
-    elif mcp_server_adapter:
-        print("MCP server adapter was not connected. No stop needed or start failed.")
+start_mcp_adapter()

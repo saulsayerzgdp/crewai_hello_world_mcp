@@ -4,7 +4,7 @@ import warnings
 
 from datetime import datetime
 
-from aip_benchmark.crew import AipBenchmark, start_mcp_adapter, stop_mcp_adapter
+from aip_benchmark.crew import AipBenchmark
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -17,15 +17,14 @@ def run():
     """
     Run the crew.
     """
-    start_mcp_adapter()
     try:
         crew = AipBenchmark()
         crew.crew().kickoff(inputs={
             "topic": "AI LLMs",
             "num_of_items": "5"
         })
-    finally:
-        stop_mcp_adapter()
+    except Exception as e:
+        raise Exception(f"An error occurred while running the crew: {e}")
 
 
 def train():
