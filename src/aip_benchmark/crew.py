@@ -7,6 +7,16 @@ from crewai_tools import MCPServerAdapter  # Import MCPServerAdapter for arXiv t
 # you can use the @before_kickoff and @after_kickoff decorators
 # https://docs.crewai.com/concepts/crews#example-crew-class-with-decorators
 
+# Connect to MCP SSE server for arXiv tools
+server_params = {
+    "url": "https://mcp.obrol.id/f/sse",
+    "transport": "sse"
+}
+
+# Global adapter and tools
+mcp_server_adapter = MCPServerAdapter(server_params)
+mcp_tools = None
+
 @CrewBase
 class AipBenchmark():
     """AipBenchmark crew"""
@@ -26,21 +36,13 @@ class AipBenchmark():
         """
         Agent for searching arXiv papers using tools from MCP SSE server.
         """
-        # Connect to MCP SSE server for arXiv tools
-        server_params = {
-            "url": "https://mcp.obrol.id/f/sse",
-            "transport": "sse"
-        }
-        with MCPServerAdapter(server_params) as mcp_tools:
-            print("SAUL SAYERS test")
-            print(f"Available tools: {[tool.name for tool in mcp_tools]}")
-            
-            return Agent(
-                config=self.agents_config['arxiv_research_agent'], # type: ignore[index]
-                tools=mcp_tools,
-                verbose=True,
-                reasoning=True
-            )
+        print("AVAILABLE TOOLS:", mcp_tools)
+        return Agent(
+            config=self.agents_config['arxiv_research_agent'], # type: ignore[index]
+            tools=mcp_tools,
+            verbose=True,
+            reasoning=True
+        )
 
     @task
     def arxiv_research_task(self) -> Task:
@@ -65,3 +67,20 @@ class AipBenchmark():
             verbose=True,
             # process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
         )
+
+def start_mcp_adapter():
+    global mcp_tools
+    try:
+        mcp_server_adapter.start()
+        mcp_tools = mcp_server_adapter.tools
+        print(f"Available tools: {[tool.name for tool in mcp_tools]}")
+    except Exception as e:
+        print(f"Error starting MCP adapter: {e}")
+        mcp_tools = mcp_server_adapter.tools
+
+def stop_mcp_adapter():
+    if mcp_server_adapter and getattr(mcp_server_adapter, 'is_connected', False):
+        print("Stopping MCP server connection…")
+        mcp_server_adapter.stop()
+    elif mcp_server_adapter:
+        print("MCP server adapter was not connected. No stop needed or start failed.")
