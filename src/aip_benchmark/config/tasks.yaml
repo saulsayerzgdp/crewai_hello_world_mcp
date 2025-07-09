@@ -1,0 +1,8 @@
+arxiv_research_task:
+  description: >
+    Search for the most relevant arXiv papers related to {topic}.
+    Limit the results to {num_of_items} items.
+  expected_output: >
+    A list of arXiv paper titles, authors, and abstracts related to {topic},
+    limited to {num_of_items} items.
+  agent: arxiv_research_agent
